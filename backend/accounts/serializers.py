@@ -17,6 +17,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "username", "email", "password", "confirmPassword")
+        
+    def validate_email(self, value):
+        if not value.endswith("@srmist.edu.in"):
+            raise serializers.ValidationError("Email must be an @srmist.edu.in email.")
+        return value
 
     def validate(self, data):
         # Check if passwords match

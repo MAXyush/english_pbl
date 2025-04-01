@@ -1,32 +1,31 @@
-"use client";
-
 import { useState } from "react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import axios from "axios";
+import { Loader2 } from "lucide-react";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
-import axios from "axios";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-// ✅ Improved Schema with better validation messages
+// ✅ Enforce SRM email format
 const formSchema = z
   .object({
-    name: z
+    name: z.string().min(3, "Username must be at least 3 characters"),
+    email: z
       .string()
-      .min(2, { message: "Username must be at least 2 characters" }),
-    email: z.string().email({ message: "Please enter a valid email address" }),
-    password: z
-      .string()
-      .min(8, { message: "Password must be at least 8 characters" }),
+      .email("Invalid email format")
+      .refine((email) => email.endsWith("@srmist.edu.in"), {
+        message: "Email must be an @srmist.edu.in email",
+      }),
+    password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -34,17 +33,10 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-type FormValues = z.infer<typeof formSchema>;
-
-interface RegisterFormProps {
-  onSuccess: () => void;
-}
-
-export function RegisterForm({ onSuccess }: RegisterFormProps) {
+export function RegisterForm({ onSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
 
-  // ✅ Ensure useForm is properly set up
-  const form = useForm<FormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -54,10 +46,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
-    console.log("🔥 Form submitted with data:", data);
-
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/accounts/register/",
@@ -65,19 +55,13 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           username: data.name,
           email: data.email,
           password: data.password,
-          confirmPassword: data.confirmPassword,
         }
       );
 
-      console.log("✅ Server response:", response.data);
       if (response.status >= 200 && response.status < 300) {
         onSuccess();
       }
-    } catch (error: any) {
-      console.error(
-        "❌ Error submitting form:",
-        error.response?.data || error.message
-      );
+    } catch (error) {
       alert(
         error.response?.data?.message ||
           "Failed to create an account. Try again."
@@ -92,12 +76,11 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          console.log("🚀 Form submission triggered!");
           form.handleSubmit(onSubmit)();
         }}
         className="space-y-4"
       >
-        {/* ✅ Username Field */}
+        {/* Username Field */}
         <FormField
           control={form.control}
           name="name"
@@ -112,7 +95,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           )}
         />
 
-        {/* ✅ Email Field (was missing) */}
+        {/* Email Field */}
         <FormField
           control={form.control}
           name="email"
@@ -122,7 +105,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="example@email.com"
+                  placeholder="example@srmist.edu.in"
                   {...field}
                 />
               </FormControl>
@@ -131,7 +114,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           )}
         />
 
-        {/* ✅ Password Field */}
+        {/* Password Field */}
         <FormField
           control={form.control}
           name="password"
@@ -146,7 +129,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           )}
         />
 
-        {/* ✅ Confirm Password Field */}
+        {/* Confirm Password Field */}
         <FormField
           control={form.control}
           name="confirmPassword"
@@ -161,7 +144,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           )}
         />
 
-        {/* ✅ Submit Button with Loader */}
+        {/* Submit Button */}
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>

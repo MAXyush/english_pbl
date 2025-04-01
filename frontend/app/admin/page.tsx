@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import axios from "axios";
+
 // Define the Vote type based on the Django model
 interface Vote {
   id: number;
@@ -23,10 +25,10 @@ export default function HostControlsPage() {
     const fetchVotes = async () => {
       setIsLoadingVotes(true);
       try {
-        // Replace with your actual API endpoint to fetch votes
-        const response = await fetch("http://localhost:3000/api/votes");
-        const data = await response.json();
-        setVotes(data);
+        const response = await axios.get(
+          "http://localhost:8000/accounts/get-votes/"
+        );
+        setVotes(response.data);
       } catch (error) {
         console.error("Failed to fetch votes:", error);
       } finally {
