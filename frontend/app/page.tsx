@@ -46,7 +46,6 @@ const VotingPage = () => {
           { book: book, id: decode.user_id } // Request payload
         );
 
-        alert(response.data.message);
         // Optionally, handle a success message or update state here
       } catch (error) {
         console.error("Error submitting vote", error);
@@ -64,7 +63,7 @@ const VotingPage = () => {
   };
 
   const handleGraph = () => {
-    router.push("/graph");
+    router.push("/results");
   };
 
   const title = "Novel vs Novel: Which One Deserves the Crown?";
@@ -72,7 +71,7 @@ const VotingPage = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600 p-6 text-white font-sans">
       <button onClick={handleLogout}>{login ? " Logout " : "Login"}</button>
-      <button onClick={handleGraph}>Show Graph</button>
+      <button onClick={handleGraph}>Show Result</button>
 
       <motion.h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-center font-serif tracking-wide break-words max-w-screen-md">
         {title.split(" ").map((word, wordIndex) => (
