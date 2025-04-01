@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import Link from "next/link";
 
 const VotingPage = () => {
+  const [login, setLogin] = useState(false);
   const router = useRouter();
   const books = [
     {
@@ -19,17 +23,57 @@ const VotingPage = () => {
     },
   ];
 
-  const handleVote = (book) => {
-    console.log(`Voted for ${book}`);
+  useEffect(() => {
     if (localStorage.getItem("token")) {
-      router.push;
+      setLogin(true);
+    } else {
+      setLogin(false);
     }
+  }, []);
+
+  const handleVote = async (book) => {
+    console.log(`Voted for ${book}`);
+
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      console.log("Token found, submitting vote...");
+      const decode = jwtDecode(token);
+      console.log(decode.user_id);
+      try {
+        const response = await axios.post(
+          "http://127.0.0.1:8000/accounts/vote/", // Your API endpoint
+          { book: book, id: decode.user_id } // Request payload
+        );
+
+        alert(response.data.message);
+        // Optionally, handle a success message or update state here
+      } catch (error) {
+        console.error("Error submitting vote", error);
+        // Optionally, handle errors (e.g., show a message to the user)
+      }
+    } else {
+      router.push("/login");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setLogin(false);
+    router.push("/login");
+  };
+
+  const handleGraph = () => {
+    router.push("/graph");
   };
 
   const title = "Novel vs Novel: Which One Deserves the Crown?";
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600 p-6 text-white font-sans">
+      <button onClick={handleLogout}>{login ? " Logout " : "Login"}</button>
+      <button onClick={handleGraph}>Show Graph</button>
+
       <motion.h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-center font-serif tracking-wide break-words max-w-screen-md">
         {title.split(" ").map((word, wordIndex) => (
           <span key={wordIndex} className="inline-block mr-2">
@@ -78,7 +122,11 @@ const VotingPage = () => {
       </div>
       <button
         className="absolute bottom-5 right-5 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition font-semibold"
-        onClick={() => router.push("/admin-login")}
+        onClick={() =>
+          localStorage.getItem("admin")
+            ? router.push("/admin")
+            : router.push("/admin-login")
+        }
       >
         Host Controls
       </button>

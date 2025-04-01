@@ -3,6 +3,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
+from .models import Vote
+
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -61,3 +63,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id","username","email"]
+        
+
+from .models import Vote
+
+class VoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vote
+        fields = ['user', 'book', 'created_at']

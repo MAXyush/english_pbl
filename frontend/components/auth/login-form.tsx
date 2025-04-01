@@ -65,7 +65,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         console.log("Success:", response.data);
         localStorage.setItem("token", response.data.token);
         onSuccess(); // Trigger success callback
-        router.push("/dashboard"); // Redirect after successful login
+        router.push("/"); // Redirect after successful login
       }
     } catch (error: any) {
       console.error("Error:", error.response?.data || "Login failed");
@@ -138,9 +138,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               Remember me
             </Label>
           </div>
-          <Button variant="link" className="p-0 h-auto text-sm" type="button">
-            Forgot password?
-          </Button>
         </div>
 
         {/* Submit Button */}

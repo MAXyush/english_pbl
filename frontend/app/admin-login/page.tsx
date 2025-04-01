@@ -10,6 +10,7 @@ const HostLoginPage = () => {
   const handleLogin = () => {
     if (password === "Ayush@123") {
       // Correct password
+      localStorage.setItem("admin", "This guy is Admin Ayush@123");
       router.push("/admin");
     } else {
       alert("Incorrect password");
