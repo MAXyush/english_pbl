@@ -23,7 +23,7 @@ import axios from "axios";
 const formSchema = z.object({
   username: z
     .string()
-    .min(3, { message: "Username must be at least 3 characters" }),
+    .min(3, { message: "email must end with @srmist.edu.in" }),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
@@ -84,7 +84,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>email</FormLabel>
               <FormControl>
                 <div className="relative">
                   <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

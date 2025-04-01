@@ -12,7 +12,7 @@ export default function HostControlsPage() {
     setIsLoading(true);
     try {
       // Replace with your actual API endpoint to stop voting
-      await fetch("http://localhost:3000/api/voting-results", {
+      await fetch("http://localhost:8000/api/voting-results", {
         method: "POST",
       });
       setVotingStopped(true);
