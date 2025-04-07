@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -27,6 +28,7 @@ const formSchema = z.object({
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
+  remember: z.boolean().default(false).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,6 +57,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     defaultValues: {
       username: "",
       password: "",
+      remember: false,
     },
   });
 
@@ -82,6 +85,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           localStorage.removeItem("admin");
         }
 
+        // Store remember me preference
+        if (data.remember) {
+          localStorage.setItem("remember", "true");
+        } else {
+          localStorage.removeItem("remember");
+        }
+
         // Add a small delay before navigation to ensure localStorage is updated
         setTimeout(() => {
           onSuccess();
@@ -104,7 +114,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg relative" role="alert">
             <span className="block sm:inline">{error}</span>
           </div>
         )}
@@ -154,22 +164,23 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           )}
         />
 
-        {/* Remember Me & Forgot Password */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="remember"
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <Label
-              htmlFor="remember"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Remember me
-            </Label>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="remember"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Remember me</FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
 
         {/* Submit Button */}
         <Button
