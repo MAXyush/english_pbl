@@ -80,7 +80,7 @@ export default function HostControlsPage() {
     try {
       console.log('Fetching voting status with headers:', getAuthHeaders());
       const response = await axios.get(
-        "http://localhost:8000/accounts/voting-status/",
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/voting-status/`,
         getAuthHeaders()
       );
       console.log('Voting status response:', response.data);
@@ -102,7 +102,7 @@ export default function HostControlsPage() {
     try {
       console.log('Fetching votes with headers:', getAuthHeaders());
       const response = await axios.get(
-        "http://localhost:8000/accounts/get-votes/",
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/get-votes/`,
         getAuthHeaders()
       );
       console.log('Votes response:', response.data);
@@ -127,7 +127,7 @@ export default function HostControlsPage() {
     try {
       console.log('Toggling voting status with headers:', getAuthHeaders());
       const response = await axios.post(
-        "http://localhost:8000/accounts/voting-status/",
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/voting-status/`,
         {
           is_active: !votingStatus?.is_active,
         },
@@ -163,7 +163,7 @@ export default function HostControlsPage() {
       
       // Always set display_results to true when showing results
       const response = await axios.post(
-        "http://localhost:8000/accounts/voting-status/",
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/voting-status/`,
         {
           display_results: true,
           is_active: votingStatus?.is_active

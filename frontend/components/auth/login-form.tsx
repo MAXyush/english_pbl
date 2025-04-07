@@ -17,13 +17,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2, Lock, User } from "lucide-react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 // ✅ Updated schema to expect username
 const formSchema = z.object({
   username: z
     .string()
-    .min(3, { message: "email must end with @srmist.edu.in" }),
+    .min(3, { message: "Username must be at least 3 characters" }),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
@@ -35,8 +35,19 @@ interface LoginFormProps {
   onSuccess: () => void;
 }
 
+interface LoginResponse {
+  token: string;
+  is_admin: boolean;
+  message?: string;
+}
+
+interface ErrorResponse {
+  message: string;
+}
+
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -49,10 +60,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8000/accounts/login/",
+      const response = await axios.post<LoginResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/login/`,
         {
           username: data.username,
           password: data.password,
@@ -78,9 +90,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       } else {
         throw new Error("Invalid response from server");
       }
-    } catch (error: any) {
-      console.error("Error:", error.response?.data || "Login failed");
-      alert(error.response?.data?.message || "Invalid username or password.");
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>;
+      const errorMessage = error.response?.data?.message || "Invalid username or password.";
+      setError(errorMessage);
+      console.error("Login error:", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +103,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+        
         {/* Username Field ✅ */}
         <FormField
           control={form.control}

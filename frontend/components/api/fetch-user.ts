@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function getUser(id: number) {
   try {
     const response = await axios.get(
-      `http://127.0.0.1:8000/accounts/users/${id}/`
+      `${process.env.NEXT_PUBLIC_API_URL}/accounts/users/${id}/`
     );
 
     if (response.status == 200) {
