@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Loader2 } from "lucide-react";
 import {
   Form,
@@ -33,10 +33,16 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-export function RegisterForm({ onSuccess }) {
+type FormValues = z.infer<typeof formSchema>;
+
+interface RegisterFormProps {
+  onSuccess: () => void;
+}
+
+export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -46,11 +52,11 @@ export function RegisterForm({ onSuccess }) {
     },
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/accounts/register/",
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/register/`,
         {
           username: data.name,
           email: data.email,
@@ -63,8 +69,9 @@ export function RegisterForm({ onSuccess }) {
         onSuccess();
       }
     } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
       alert(
-        error.response?.data?.message ||
+        axiosError.response?.data?.message ||
           "Failed to create an account. Try again."
       );
     } finally {
