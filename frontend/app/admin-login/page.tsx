@@ -29,10 +29,13 @@ const HostLoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/accounts/login/", {
-        username: "admin",
-        password: password
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/login/`,
+        {
+          username: "admin",
+          password: password
+        }
+      );
 
       if (response.data.is_admin) {
         localStorage.setItem("token", response.data.token);

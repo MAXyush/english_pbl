@@ -3,7 +3,11 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['localhost', 'your-render-domain.onrender.com'], // Add your Render domain here
+    domains: [
+      'localhost',
+      'english-pbl-seven.onrender.com', // Your Render backend domain
+      'english-pbl-seven.vercel.app'    // Your Vercel frontend domain
+    ],
     unoptimized: process.env.NODE_ENV === 'development',
   },
   env: {
