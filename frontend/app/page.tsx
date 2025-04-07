@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import Link from "next/link";
+import Image from "next/image";
 
 interface VotingStatus {
   is_active: boolean;
@@ -26,7 +27,7 @@ interface JwtPayload {
   token_type: string;
 }
 
-const VotingPage = () => {
+export default function Page() {
   const [login, setLogin] = useState(false);
   const [votingStatus, setVotingStatus] = useState<VotingStatus | null>(null);
   const [voteCounts, setVoteCounts] = useState<VoteCount[]>([]);
@@ -272,11 +273,16 @@ const VotingPage = () => {
           >
             <h2 className="text-2xl font-bold mb-2 text-gray-900">{book.title}</h2>
             <p className="text-lg mb-4 text-gray-600">by {book.author}</p>
-            <img
-              src={book.image}
-              alt={book.title}
-              className="w-full h-64 object-cover rounded-lg mb-4"
-            />
+            <div className="relative w-full h-64 mb-4">
+              <Image
+                src={book.image}
+                alt={book.title}
+                fill
+                className="object-cover rounded-lg"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority
+              />
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-lg text-gray-900">
                 Votes: {voteCounts.find(v => v.book === book.title)?.count || 0}
@@ -298,6 +304,4 @@ const VotingPage = () => {
       </div>
     </div>
   );
-};
-
-export default VotingPage;
+}
