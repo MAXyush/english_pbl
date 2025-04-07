@@ -1,13 +1,6 @@
 "use client";
-import { useState } from "react";
 import { RegisterForm } from "@/components/auth/register-form";
-import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
-
-interface RegisterForm {
-  email: string;
-  password: string;
-}
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const router = useRouter();
