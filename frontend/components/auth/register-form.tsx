@@ -55,6 +55,7 @@ export function RegisterForm({ onSuccess }) {
           username: data.name,
           email: data.email,
           password: data.password,
+          confirmPassword: data.confirmPassword,
         }
       );
 

@@ -52,24 +52,35 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/accounts/login/",
+        "http://localhost:8000/accounts/login/",
         {
-          username: data.username, // ✅ Using username
+          username: data.username,
           password: data.password,
         }
       );
 
-      console.log(response.data);
-
-      if (response.status === 200) {
-        console.log("Success:", response.data);
+      if (response.status === 200 && response.data.token) {
+        // Store the token
         localStorage.setItem("token", response.data.token);
-        onSuccess(); // Trigger success callback
-        router.push("/"); // Redirect after successful login
+        
+        // Set admin status based on the response
+        if (response.data.is_admin) {
+          localStorage.setItem("admin", "true");
+        } else {
+          localStorage.removeItem("admin");
+        }
+
+        // Add a small delay before navigation to ensure localStorage is updated
+        setTimeout(() => {
+          onSuccess();
+          router.push("/");
+        }, 100);
+      } else {
+        throw new Error("Invalid response from server");
       }
     } catch (error: any) {
       console.error("Error:", error.response?.data || "Login failed");
-      alert("Invalid username or password.");
+      alert(error.response?.data?.message || "Invalid username or password.");
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +95,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>email</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
                 <div className="relative">
                   <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

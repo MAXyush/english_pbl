@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from .models import Vote
+from .models import Vote, VotingStatus
 
 
 
@@ -67,12 +67,19 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id","username","email"]
+        fields = ["id","username","email","is_staff"]
         
 
 from .models import Vote
 
 class VoteSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = Vote
-        fields = ['user', 'book', 'created_at']
+        fields = ('id', 'username', 'book', 'created_at')
+
+class VotingStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VotingStatus
+        fields = ('is_active', 'display_results', 'last_updated')

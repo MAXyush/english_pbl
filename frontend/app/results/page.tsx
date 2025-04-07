@@ -22,71 +22,207 @@ interface VotingResult {
   percentage: number;
 }
 
+interface VoteCount {
+  book: string;
+  count: number;
+}
+
 export default function ResultsPage() {
   const [results, setResults] = useState<VotingResult[]>([]);
   const [winner, setWinner] = useState<VotingResult | null>(null);
-  const [votes1984, setVotes1984] = useState<number>(0);
-  const [votesNewWorld, setVotesNewWorld] = useState<number>(0);
+  const [totalVotes, setTotalVotes] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [canViewResults, setCanViewResults] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
-  const fetchVotes = async () => {
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return null;
+    }
+    return {
+      headers: {
+        'Authorization': `JWT ${token}`,
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true
+    };
+  };
+
+  const handleHideResults = async () => {
     try {
-      const [res1984, resNewWorld] = await Promise.all([
-        axios.get("http://127.0.0.1:8000/accounts/get-votes/", {
-          params: { book: "1984" },
-        }),
-        axios.get("http://127.0.0.1:8000/accounts/get-votes/", {
-          params: { book: "Brave New World" },
-        }),
-      ]);
+      const headers = getAuthHeaders();
+      if (!headers) return;
 
-      const votes1 = res1984.data.length;
-      const votes2 = resNewWorld.data.length;
-      setVotes1984(votes1);
-      setVotesNewWorld(votes2);
-      const totalVotes = votes1 + votes2;
+      // First get the current voting status
+      const statusResponse = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/voting-status/`,
+        headers
+      );
 
+      // Then update only display_results while preserving is_active
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/voting-status/`,
+        {
+          display_results: false,
+          is_active: statusResponse.data.is_active
+        },
+        headers
+      );
+
+      router.push('/admin');
+    } catch (error) {
+      console.error("Error hiding results:", error);
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        router.push("/login");
+      }
+    }
+  };
+
+  const fetchVotes = async () => {
+    setIsLoading(true);
+    try {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      // First check if we can view results
+      const statusResponse = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/voting-status/`,
+        headers
+      );
+
+      console.log("Voting status response:", statusResponse.data);
+
+      // Set the canViewResults state based on the response
+      setCanViewResults(statusResponse.data.display_results);
+
+      // If results are not available, don't proceed with fetching votes
+      if (!statusResponse.data.display_results) {
+        console.log("Results are not available for display");
+        setIsLoading(false);
+        return;
+      }
+
+      // Then fetch the votes
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/get-votes/`,
+        headers
+      );
+
+      console.log("Vote counts response:", response.data);
+
+      const voteCounts: VoteCount[] = response.data.vote_counts || [];
+      const total = voteCounts.reduce((sum, vote) => sum + vote.count, 0);
+      
       const resultsData: VotingResult[] = [
         {
           novel: "1984",
           author: "George Orwell",
-          votes: votes1,
-          percentage: totalVotes ? (votes1 / totalVotes) * 100 : 0,
+          votes: voteCounts.find(v => v.book === "1984")?.count || 0,
+          percentage: total ? ((voteCounts.find(v => v.book === "1984")?.count || 0) / total) * 100 : 0,
         },
         {
           novel: "Brave New World",
           author: "Aldous Huxley",
-          votes: votes2,
-          percentage: totalVotes ? (votes2 / totalVotes) * 100 : 0,
+          votes: voteCounts.find(v => v.book === "Brave New World")?.count || 0,
+          percentage: total ? ((voteCounts.find(v => v.book === "Brave New World")?.count || 0) / total) * 100 : 0,
         },
       ];
 
+      console.log("Processed results data:", resultsData);
+
       setResults(resultsData);
-      setWinner(
-        resultsData.reduce(
+      setTotalVotes(total);
+      
+      if (resultsData.length > 0) {
+        const winningNovel = resultsData.reduce(
           (max, novel) => (novel.votes > max.votes ? novel : max),
           resultsData[0]
-        )
-      );
+        );
+        console.log("Setting winner:", winningNovel);
+        setWinner(winningNovel);
+      }
     } catch (error) {
-      console.error("Error fetching votes", error);
+      console.error("Error fetching votes:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Error details:", {
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers
+        });
+        if (error.response?.status === 403) {
+          router.push("/login");
+        }
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    // Check if user is admin
+    const admin = localStorage.getItem("admin") === "true";
+    setIsAdmin(admin);
+
+    // Initial fetch
     fetchVotes();
+
+    // Set up polling to check for updates
+    const interval = setInterval(fetchVotes, 5000);
+    return () => clearInterval(interval);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-700 to-purple-900 text-white flex items-center justify-center">
+        <div className="text-2xl">Loading results...</div>
+      </div>
+    );
+  }
+
+  if (!canViewResults) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-700 to-purple-900 text-white flex flex-col items-center justify-center">
+        <div className="text-2xl mb-4">Results are not available yet.</div>
+        <button
+          onClick={() => router.push('/')}
+          className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg transition-colors"
+        >
+          Back to Voting
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-700 to-purple-900 text-white py-8 px-4">
       <div className="max-w-5xl mx-auto">
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 mb-6 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
-        >
-          <ArrowLeft size={18} />
-          <span>Back to voting</span>
-        </button>
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
+          >
+            <ArrowLeft size={18} />
+            <span>Back to voting</span>
+          </button>
+          
+          {isAdmin && (
+            <button
+              onClick={handleHideResults}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Hide Results
+            </button>
+          )}
+        </div>
 
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">
           Novel vs Novel: Final Results
@@ -94,7 +230,7 @@ export default function ResultsPage() {
 
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
           <h2 className="text-2xl font-semibold mb-2">
-            Total Votes: {votes1984 + votesNewWorld}
+            Total Votes: {totalVotes}
           </h2>
 
           {winner && (
